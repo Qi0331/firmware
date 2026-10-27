@@ -1526,11 +1526,16 @@ bool loadConfig(const char *configPath)
         }
 
         if (yamlConfig["General"]) {
-            portduino_config.MaxNodes = (yamlConfig["General"]["MaxNodes"]).as<int>(200);
-            portduino_config.maxtophone = (yamlConfig["General"]["MaxMessageQueue"]).as<int>(100);
-            portduino_config.config_directory = (yamlConfig["General"]["ConfigDirectory"]).as<std::string>("");
-            portduino_config.available_directory =
-                (yamlConfig["General"]["AvailableDirectory"]).as<std::string>("/etc/meshtasticd/available.d/");
+            // ConfigDirectory fragments are overlays: only explicitly supplied
+            // fields should replace values loaded from an earlier file.
+            if (yamlConfig["General"]["MaxNodes"] && !yamlConfig["General"]["MaxNodes"].IsNull())
+                portduino_config.MaxNodes = yamlConfig["General"]["MaxNodes"].as<int>();
+            if (yamlConfig["General"]["MaxMessageQueue"] && !yamlConfig["General"]["MaxMessageQueue"].IsNull())
+                portduino_config.maxtophone = yamlConfig["General"]["MaxMessageQueue"].as<int>();
+            if (yamlConfig["General"]["ConfigDirectory"] && !yamlConfig["General"]["ConfigDirectory"].IsNull())
+                portduino_config.config_directory = yamlConfig["General"]["ConfigDirectory"].as<std::string>();
+            if (yamlConfig["General"]["AvailableDirectory"] && !yamlConfig["General"]["AvailableDirectory"].IsNull())
+                portduino_config.available_directory = yamlConfig["General"]["AvailableDirectory"].as<std::string>();
             if ((yamlConfig["General"]["MACAddress"]).as<std::string>("") != "" &&
                 (yamlConfig["General"]["MACAddressSource"]).as<std::string>("") != "") {
                 // --check reports this as a finding against the file it came from, so
