@@ -27,9 +27,53 @@ class HardwareNameAuditTests(unittest.TestCase):
                               '[env:b-board]\nboard_level = pr\n')
             self.assertEqual(firmware_names(Path(tmp)), {'a-board': 'Board A'})
 
+    def test_ambiguous_api_target_is_not_silently_overwritten(self):
+        text = '''export const devices = [
+          {
+            platformioTarget: "native",
+            displayName: "RAK6421 Hat+",
+          },
+          {
+            platformioTarget: "native",
+            displayName: "Elecrow Meshstick 1262",
+          },
+          {
+            platformioTarget: "board-a",
+            displayName: "Board A",
+          },
+        ]'''
+        names = api_names(text)
+        self.assertIsNone(names['native'])
+        result = compare({'native': 'Native', 'board-a': 'Board A'}, names)
+        self.assertEqual(result['ambiguous_api_targets'], ['native'])
+        self.assertEqual(result['mismatched'], [])
+        self.assertEqual(result['matched'], 1)
+        self.assertEqual(result['compared'], 1)
+
+    def test_non_env_section_does_not_leak_into_previous_env(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp) / 'variants/esp32/test/platformio.ini'
+            target.parent.mkdir(parents=True)
+            target.write_text(
+                '[env:board-a]\ncustom_meshtastic_display_name = Board A\n'
+                '[common]\ncustom_meshtastic_display_name = Not a board\n'
+                '[env:board-b]\ncustom_meshtastic_display_name = Board B\n'
+            )
+            self.assertEqual(firmware_names(Path(tmp)),
+                             {'board-a': 'Board A', 'board-b': 'Board B'})
+
+    def test_commented_api_fields_do_not_override_real_values(self):
+        text = '''{
+          platformioTarget: "board-a",
+          // displayName: "Obsolete",
+          displayName: "Board A",
+        },'''
+        self.assertEqual(api_names(text), {'board-a': 'Board A'})
+
     def test_compare_names_and_absences(self):
         actual = compare({'a': 'One', 'b': 'Two', 'c': 'Three'},
                          {'a': 'One', 'b': 'TWO', 'd': 'Four'})
+        self.assertEqual(actual['ambiguous_api_targets'], [])
         self.assertEqual(actual['matched'], 1)
         self.assertEqual(actual['compared'], 2)
         self.assertEqual(actual['mismatched'], [{'target': 'b', 'firmware': 'Two', 'api': 'TWO'}])
