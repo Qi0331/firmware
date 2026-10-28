@@ -1039,18 +1039,18 @@ bool loadConfig(const char *configPath)
             // ConfigDirectory files are overlays: only keys present in this
             // file may override values read from earlier config files.
             if (yamlConfig["Logging"]["LogLevel"]) {
-            if (yamlConfig["Logging"]["LogLevel"].as<std::string>("info") == "trace") {
-                portduino_config.logoutputlevel = level_trace;
-            } else if (yamlConfig["Logging"]["LogLevel"].as<std::string>("info") == "debug") {
-                portduino_config.logoutputlevel = level_debug;
-            } else if (yamlConfig["Logging"]["LogLevel"].as<std::string>("info") == "info") {
-                portduino_config.logoutputlevel = level_info;
-            } else if (yamlConfig["Logging"]["LogLevel"].as<std::string>("info") == "warn") {
-                portduino_config.logoutputlevel = level_warn;
-            } else if (yamlConfig["Logging"]["LogLevel"].as<std::string>("info") == "error") {
-                portduino_config.logoutputlevel = level_error;
-            }
-            }
+                if (yamlConfig["Logging"]["LogLevel"].as<std::string>("info") == "trace") {
+                    portduino_config.logoutputlevel = level_trace;
+                } else if (yamlConfig["Logging"]["LogLevel"].as<std::string>("info") == "debug") {
+                    portduino_config.logoutputlevel = level_debug;
+                } else if (yamlConfig["Logging"]["LogLevel"].as<std::string>("info") == "info") {
+                    portduino_config.logoutputlevel = level_info;
+                } else if (yamlConfig["Logging"]["LogLevel"].as<std::string>("info") == "warn") {
+                    portduino_config.logoutputlevel = level_warn;
+                } else if (yamlConfig["Logging"]["LogLevel"].as<std::string>("info") == "error") {
+                    portduino_config.logoutputlevel = level_error;
+                }
+                }
             if (yamlConfig["Logging"]["TraceFile"])
                 portduino_config.traceFilename = yamlConfig["Logging"]["TraceFile"].as<std::string>("");
             if (yamlConfig["Logging"]["JSONFile"])
@@ -1058,27 +1058,27 @@ bool loadConfig(const char *configPath)
             if (yamlConfig["Logging"]["JSONFileRotate"])
                 portduino_config.JSONFileRotate = yamlConfig["Logging"]["JSONFileRotate"].as<int>(0);
             if (yamlConfig["Logging"]["JSONFilter"]) {
-            portduino_config.JSONFilter = (_meshtastic_PortNum)yamlConfig["Logging"]["JSONFilter"].as<int>(0);
-            if (yamlConfig["Logging"]["JSONFilter"].as<std::string>("") == "textmessage")
-                portduino_config.JSONFilter = meshtastic_PortNum_TEXT_MESSAGE_APP;
-            else if (yamlConfig["Logging"]["JSONFilter"].as<std::string>("") == "telemetry")
-                portduino_config.JSONFilter = meshtastic_PortNum_TELEMETRY_APP;
-            else if (yamlConfig["Logging"]["JSONFilter"].as<std::string>("") == "nodeinfo")
-                portduino_config.JSONFilter = meshtastic_PortNum_NODEINFO_APP;
-            else if (yamlConfig["Logging"]["JSONFilter"].as<std::string>("") == "position")
-                portduino_config.JSONFilter = meshtastic_PortNum_POSITION_APP;
-            else if (yamlConfig["Logging"]["JSONFilter"].as<std::string>("") == "waypoint")
-                portduino_config.JSONFilter = meshtastic_PortNum_WAYPOINT_APP;
-            else if (yamlConfig["Logging"]["JSONFilter"].as<std::string>("") == "neighborinfo")
-                portduino_config.JSONFilter = meshtastic_PortNum_NEIGHBORINFO_APP;
-            else if (yamlConfig["Logging"]["JSONFilter"].as<std::string>("") == "traceroute")
-                portduino_config.JSONFilter = meshtastic_PortNum_TRACEROUTE_APP;
-            else if (yamlConfig["Logging"]["JSONFilter"].as<std::string>("") == "detection")
-                portduino_config.JSONFilter = meshtastic_PortNum_DETECTION_SENSOR_APP;
-            else if (yamlConfig["Logging"]["JSONFilter"].as<std::string>("") == "paxcounter")
-                portduino_config.JSONFilter = meshtastic_PortNum_PAXCOUNTER_APP;
-            else if (yamlConfig["Logging"]["JSONFilter"].as<std::string>("") == "remotehardware")
-                portduino_config.JSONFilter = meshtastic_PortNum_REMOTE_HARDWARE_APP;
+                portduino_config.JSONFilter = (_meshtastic_PortNum)yamlConfig["Logging"]["JSONFilter"].as<int>(0);
+                if (yamlConfig["Logging"]["JSONFilter"].as<std::string>("") == "textmessage")
+                    portduino_config.JSONFilter = meshtastic_PortNum_TEXT_MESSAGE_APP;
+                else if (yamlConfig["Logging"]["JSONFilter"].as<std::string>("") == "telemetry")
+                    portduino_config.JSONFilter = meshtastic_PortNum_TELEMETRY_APP;
+                else if (yamlConfig["Logging"]["JSONFilter"].as<std::string>("") == "nodeinfo")
+                    portduino_config.JSONFilter = meshtastic_PortNum_NODEINFO_APP;
+                else if (yamlConfig["Logging"]["JSONFilter"].as<std::string>("") == "position")
+                    portduino_config.JSONFilter = meshtastic_PortNum_POSITION_APP;
+                else if (yamlConfig["Logging"]["JSONFilter"].as<std::string>("") == "waypoint")
+                    portduino_config.JSONFilter = meshtastic_PortNum_WAYPOINT_APP;
+                else if (yamlConfig["Logging"]["JSONFilter"].as<std::string>("") == "neighborinfo")
+                    portduino_config.JSONFilter = meshtastic_PortNum_NEIGHBORINFO_APP;
+                else if (yamlConfig["Logging"]["JSONFilter"].as<std::string>("") == "traceroute")
+                    portduino_config.JSONFilter = meshtastic_PortNum_TRACEROUTE_APP;
+                else if (yamlConfig["Logging"]["JSONFilter"].as<std::string>("") == "detection")
+                    portduino_config.JSONFilter = meshtastic_PortNum_DETECTION_SENSOR_APP;
+                else if (yamlConfig["Logging"]["JSONFilter"].as<std::string>("") == "paxcounter")
+                    portduino_config.JSONFilter = meshtastic_PortNum_PAXCOUNTER_APP;
+                else if (yamlConfig["Logging"]["JSONFilter"].as<std::string>("") == "remotehardware")
+                    portduino_config.JSONFilter = meshtastic_PortNum_REMOTE_HARDWARE_APP;
             }
 
             if (yamlConfig["Logging"]["AsciiLogs"]) {
@@ -1557,19 +1557,28 @@ bool loadConfig(const char *configPath)
                     exit(EXIT_FAILURE);
                 }
             }
-            if (checkConfigPort) {
+            if (checkConfigPort && yamlConfig["General"]["APIPort"]) {
                 portduino_config.api_port = (yamlConfig["General"]["APIPort"]).as<int>(-1);
                 if (portduino_config.api_port > 1023 && portduino_config.api_port < 65536) {
                     TCPPort = (portduino_config.api_port);
                 }
             }
-            portduino_config.mac_address = (yamlConfig["General"]["MACAddress"]).as<std::string>("");
-            if (portduino_config.mac_address != "") {
-                portduino_config.mac_address_explicit = true;
-            } else if ((yamlConfig["General"]["MACAddressSource"]).as<std::string>("") != "") {
-                portduino_config.mac_address_source = (yamlConfig["General"]["MACAddressSource"]).as<std::string>("");
-                std::ifstream infile("/sys/class/net/" + portduino_config.mac_address_source + "/address");
-                std::getline(infile, portduino_config.mac_address);
+            // An overlay without MACAddress/MACAddressSource must preserve the
+            // previously selected identity. An explicit key replaces that
+            // selection, including when switching from a literal MAC to a NIC.
+            if (yamlConfig["General"]["MACAddress"]) {
+                portduino_config.mac_address = yamlConfig["General"]["MACAddress"].as<std::string>("");
+                portduino_config.mac_address_explicit = !portduino_config.mac_address.empty();
+                if (portduino_config.mac_address_explicit)
+                    portduino_config.mac_address_source.clear();
+            } else if (yamlConfig["General"]["MACAddressSource"]) {
+                portduino_config.mac_address_source = yamlConfig["General"]["MACAddressSource"].as<std::string>("");
+                portduino_config.mac_address.clear();
+                portduino_config.mac_address_explicit = false;
+                if (!portduino_config.mac_address_source.empty()) {
+                    std::ifstream infile("/sys/class/net/" + portduino_config.mac_address_source + "/address");
+                    std::getline(infile, portduino_config.mac_address);
+                }
             }
 
             // https://stackoverflow.com/a/20326454
