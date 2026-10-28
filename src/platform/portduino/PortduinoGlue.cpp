@@ -1050,7 +1050,7 @@ bool loadConfig(const char *configPath)
                 } else if (yamlConfig["Logging"]["LogLevel"].as<std::string>("info") == "error") {
                     portduino_config.logoutputlevel = level_error;
                 }
-                }
+            }
             if (yamlConfig["Logging"]["TraceFile"])
                 portduino_config.traceFilename = yamlConfig["Logging"]["TraceFile"].as<std::string>("");
             if (yamlConfig["Logging"]["JSONFile"])
@@ -1567,6 +1567,7 @@ bool loadConfig(const char *configPath)
             // previously selected identity. An explicit key replaces that
             // selection, including when switching from a literal MAC to a NIC.
             if (yamlConfig["General"]["MACAddress"]) {
+                portduino_config.mac_address_source.clear();
                 portduino_config.mac_address = yamlConfig["General"]["MACAddress"].as<std::string>("");
                 portduino_config.mac_address_explicit = !portduino_config.mac_address.empty();
                 if (portduino_config.mac_address_explicit)
