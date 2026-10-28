@@ -1036,6 +1036,9 @@ bool loadConfig(const char *configPath)
     try {
         yamlConfig = YAML::LoadFile(configPath);
         if (yamlConfig["Logging"]) {
+            // ConfigDirectory files are overlays: only keys present in this
+            // file may override values read from earlier config files.
+            if (yamlConfig["Logging"]["LogLevel"]) {
             if (yamlConfig["Logging"]["LogLevel"].as<std::string>("info") == "trace") {
                 portduino_config.logoutputlevel = level_trace;
             } else if (yamlConfig["Logging"]["LogLevel"].as<std::string>("info") == "debug") {
@@ -1047,9 +1050,14 @@ bool loadConfig(const char *configPath)
             } else if (yamlConfig["Logging"]["LogLevel"].as<std::string>("info") == "error") {
                 portduino_config.logoutputlevel = level_error;
             }
-            portduino_config.traceFilename = yamlConfig["Logging"]["TraceFile"].as<std::string>("");
-            portduino_config.JSONFilename = yamlConfig["Logging"]["JSONFile"].as<std::string>("");
-            portduino_config.JSONFileRotate = yamlConfig["Logging"]["JSONFileRotate"].as<int>(0);
+            }
+            if (yamlConfig["Logging"]["TraceFile"])
+                portduino_config.traceFilename = yamlConfig["Logging"]["TraceFile"].as<std::string>("");
+            if (yamlConfig["Logging"]["JSONFile"])
+                portduino_config.JSONFilename = yamlConfig["Logging"]["JSONFile"].as<std::string>("");
+            if (yamlConfig["Logging"]["JSONFileRotate"])
+                portduino_config.JSONFileRotate = yamlConfig["Logging"]["JSONFileRotate"].as<int>(0);
+            if (yamlConfig["Logging"]["JSONFilter"]) {
             portduino_config.JSONFilter = (_meshtastic_PortNum)yamlConfig["Logging"]["JSONFilter"].as<int>(0);
             if (yamlConfig["Logging"]["JSONFilter"].as<std::string>("") == "textmessage")
                 portduino_config.JSONFilter = meshtastic_PortNum_TEXT_MESSAGE_APP;
@@ -1071,6 +1079,7 @@ bool loadConfig(const char *configPath)
                 portduino_config.JSONFilter = meshtastic_PortNum_PAXCOUNTER_APP;
             else if (yamlConfig["Logging"]["JSONFilter"].as<std::string>("") == "remotehardware")
                 portduino_config.JSONFilter = meshtastic_PortNum_REMOTE_HARDWARE_APP;
+            }
 
             if (yamlConfig["Logging"]["AsciiLogs"]) {
                 // Default is !isatty(1) but can be set explicitly in config.yaml
@@ -1465,9 +1474,12 @@ bool loadConfig(const char *configPath)
         }
 
         if (yamlConfig["HostMetrics"]) {
-            portduino_config.hostMetrics_channel = (yamlConfig["HostMetrics"]["Channel"]).as<int>(0);
-            portduino_config.hostMetrics_interval = (yamlConfig["HostMetrics"]["ReportInterval"]).as<int>(0);
-            portduino_config.hostMetrics_user_command = (yamlConfig["HostMetrics"]["UserStringCommand"]).as<std::string>("");
+            if (yamlConfig["HostMetrics"]["Channel"])
+                portduino_config.hostMetrics_channel = (yamlConfig["HostMetrics"]["Channel"]).as<int>(0);
+            if (yamlConfig["HostMetrics"]["ReportInterval"])
+                portduino_config.hostMetrics_interval = (yamlConfig["HostMetrics"]["ReportInterval"]).as<int>(0);
+            if (yamlConfig["HostMetrics"]["UserStringCommand"])
+                portduino_config.hostMetrics_user_command = (yamlConfig["HostMetrics"]["UserStringCommand"]).as<std::string>("");
         }
 
         if (yamlConfig["Security"] && yamlConfig["Security"]["AdminKeys"]) {
