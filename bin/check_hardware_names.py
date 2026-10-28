@@ -14,6 +14,8 @@ def api_names(text):
     records = {}
     target = name = None
     for line in text.splitlines():
+        if line.lstrip().startswith('//'):
+            continue
         if re.match(r'^\s*\{\s*$', line):
             target = name = None
         match = re.search(r'\bplatformioTarget:\s*[\'\"]([^\'\"]+)[\'\"]', line)
@@ -24,7 +26,12 @@ def api_names(text):
             name = match.group(1)
         if re.match(r'^\s*\},?\s*$', line):
             if target is not None and name is not None:
-                records[target] = name
+                # Multiple hardware models can share a PlatformIO target.
+                # Do not silently keep the last API display name.
+                if target in records and records[target] != name:
+                    records[target] = None
+                elif target not in records:
+                    records[target] = name
             target = name = None
     return records
 
@@ -35,9 +42,11 @@ def firmware_names(root):
     for path in sorted((root / 'variants').rglob('platformio.ini')):
         env = None
         for line in path.read_text(encoding='utf-8').splitlines():
-            match = re.match(r'^\s*\[env:([^\]]+)\]', line)
+            match = re.match(r'^\s*\[([^\]]+)\]', line)
             if match:
-                env = match.group(1)
+                section = match.group(1)
+                env = section[4:] if section.startswith('env:') else None
+                continue
             match = re.match(r'^\s*custom_meshtastic_display_name\s*=\s*(.+?)\s*(?:;.*)?$', line)
             if match and env is not None:
                 records[env] = match.group(1).strip()
@@ -45,13 +54,16 @@ def firmware_names(root):
 
 
 def compare(firmware, api):
-    overlap = sorted(firmware.keys() & api.keys())
+    # Ambiguous API targets cannot be compared against one firmware name.
+    unique_api = {k: v for k, v in api.items() if v is not None}
+    overlap = sorted(firmware.keys() & unique_api.keys())
     return {
+        'ambiguous_api_targets': sorted(api.keys() - unique_api.keys()),
         'mismatched': [
             {'target': k, 'firmware': firmware[k], 'api': api[k]}
             for k in overlap if firmware[k] != api[k]
         ],
-        'api_without_firmware_display_name': sorted(api.keys() - firmware.keys()),
+        'api_without_firmware_display_name': sorted(unique_api.keys() - firmware.keys()),
         'firmware_only_display_name': sorted(firmware.keys() - api.keys()),
         'matched': sum(firmware[k] == api[k] for k in overlap),
         'compared': len(overlap),
