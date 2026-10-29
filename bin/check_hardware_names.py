@@ -55,13 +55,12 @@ def strip_ts_comments(text):
         i += 1
     return ''.join(result)
 
+
 def api_names(text):
     """Extract simple DeviceHardware entries from resource.ts."""
     records = {}
     target = name = None
     for line in strip_ts_comments(text).splitlines():
-        if line.lstrip().startswith('//'):
-            continue
         if re.match(r'^\s*\{\s*$', line):
             target = name = None
         match = re.search(r'\bplatformioTarget:\s*[\'\"]([^\'\"]+)[\'\"]', line)
