@@ -9,11 +9,57 @@ import re
 from pathlib import Path
 
 
+def strip_ts_comments(text):
+    """Remove TypeScript comments without treating // inside strings as comments."""
+    result = []
+    i = 0
+    quote = None
+    escaped = False
+    block = False
+    while i < len(text):
+        ch = text[i]
+        next_ch = text[i + 1] if i + 1 < len(text) else ''
+        if block:
+            if ch == '*' and next_ch == '/':
+                block = False
+                i += 2
+                continue
+            if ch == '\n':
+                result.append('\n')
+            i += 1
+            continue
+        if quote:
+            result.append(ch)
+            if escaped:
+                escaped = False
+            elif ch == '\\':
+                escaped = True
+            elif ch == quote:
+                quote = None
+            i += 1
+            continue
+        if ch in ('"', "'", '`'):
+            quote = ch
+            result.append(ch)
+            i += 1
+            continue
+        if ch == '/' and next_ch == '*':
+            block = True
+            i += 2
+            continue
+        if ch == '/' and next_ch == '/':
+            while i < len(text) and text[i] != '\n':
+                i += 1
+            continue
+        result.append(ch)
+        i += 1
+    return ''.join(result)
+
 def api_names(text):
     """Extract simple DeviceHardware entries from resource.ts."""
     records = {}
     target = name = None
-    for line in text.splitlines():
+    for line in strip_ts_comments(text).splitlines():
         if line.lstrip().startswith('//'):
             continue
         if re.match(r'^\s*\{\s*$', line):
