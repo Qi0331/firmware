@@ -19,6 +19,23 @@ class HardwareNameAuditTests(unittest.TestCase):
         ]'''
         self.assertEqual(api_names(text), {'a-board': 'Board A', 'board-b': 'Board B'})
 
+    def test_ts_comments_do_not_inject_fake_hardware_names(self):
+        text = '''export const devices = [
+          /* {
+            platformioTarget: "fake",
+            displayName: "Fake Board",
+          }, */
+          {
+            platformioTarget: "board-a", /* displayName: "Wrong" */
+            displayName: "Board A // Pro",
+          },
+          {
+            platformioTarget: 'board-b', // displayName: 'Wrong'
+            displayName: 'Board B',
+          },
+        ]'''
+        self.assertEqual(api_names(text),
+                         {'board-a': 'Board A // Pro', 'board-b': 'Board B'})
     def test_extract_variant_names(self):
         with tempfile.TemporaryDirectory() as tmp:
             target = Path(tmp) / 'variants/esp32/test/platformio.ini'
