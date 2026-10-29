@@ -21,7 +21,9 @@ def emitted_value(output, section, key):
             inside = line[:-1] == section
             continue
         if inside:
-            match = re.fullmatch(r'\s+' + re.escape(key) + r':\s*(.*?)\s*', line)
+            # --output-yaml emits direct section children at two spaces.
+            # A nested mapping may reuse a key, but is not the section value.
+            match = re.fullmatch(r' {2}' + re.escape(key) + r':\s*(.*?)\s*', line)
             if match:
                 return match.group(1).strip('"\'')
     raise AssertionError(f'Missing {section}.{key} in emitted YAML:\n{output}')
@@ -34,6 +36,18 @@ class ConfigOverlayTests(unittest.TestCase):
         self.assertEqual(emitted_value(output, 'Logging', 'MaxNodes'), '10')
         with self.assertRaises(AssertionError):
             emitted_value(output, 'HostMetrics', 'MaxNodes')
+
+    def test_emitted_scalar_parser_ignores_nested_keys(self):
+        output = (
+            'General:\n'
+            '  Nested:\n'
+            '    MaxNodes: 999\n'
+            '  MaxNodes: 500\n'
+            'Logging:\n'
+            '  MaxNodes: 10\n'
+        )
+        self.assertEqual(emitted_value(output, 'General', 'MaxNodes'), '500')
+        self.assertEqual(emitted_value(output, 'Logging', 'MaxNodes'), '10')
 
     @unittest.skipUnless(os.environ.get('MESHTASTICD_BIN'),
                          'Set MESHTASTICD_BIN to run native overlay integration')
