@@ -36,6 +36,7 @@ class HardwareNameAuditTests(unittest.TestCase):
         ]'''
         self.assertEqual(api_names(text),
                          {'board-a': 'Board A // Pro', 'board-b': 'Board B'})
+
     def test_extract_variant_names(self):
         with tempfile.TemporaryDirectory() as tmp:
             target = Path(tmp) / 'variants/esp32/test/platformio.ini'
