@@ -35,6 +35,21 @@ class ThinkNodeM5PsramConfigTests(unittest.TestCase):
         self.assertEqual(board['upload']['flash_size'], '4MB')
         self.assertEqual(board['upload']['maximum_size'], 4194304)
 
+    def test_psram_board_preserves_original_n4_hardware_settings(self):
+        # Only the PSRAM-specific build settings should differ from the
+        # original N4 board; changing pin-independent upload/debug settings
+        # would introduce unrelated risk to an unverified hardware change.
+        original = json.loads((ROOT / 'boards/ESP32-S3-WROOM-1-N4.json').read_text())
+        candidate = json.loads((ROOT / 'boards' / (BOARD + '.json')).read_text())
+        for key in ('upload', 'connectivity', 'debug', 'frameworks'):
+            with self.subTest(key=key):
+                self.assertEqual(candidate[key], original[key])
+        expected_build = json.loads(json.dumps(original['build']))
+        expected_build['arduino']['memory_type'] = 'qio_opi'
+        expected_build['psram_type'] = 'qio_opi'
+        expected_build['extra_flags'].append('-D BOARD_HAS_PSRAM')
+        self.assertEqual(candidate['build'], expected_build)
+
     def test_both_m5_variants_use_the_same_psram_board(self):
         ini = (ROOT / 'variants/esp32s3/ELECROW-ThinkNode-M5/platformio.ini'
                ).read_text()
