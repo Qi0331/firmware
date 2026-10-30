@@ -88,6 +88,35 @@ class HardwareNameAuditTests(unittest.TestCase):
         },'''
         self.assertEqual(api_names(text), {'board-a': 'Board A'})
 
+    def test_ambiguous_api_target_is_a_strict_failure(self):
+        # A duplicate target must not make --strict appear clean when the
+        # conflicting display names cannot be compared meaningfully.
+        import contextlib
+        import io
+        import json
+        import sys
+        from unittest.mock import patch
+        from check_hardware_names import main
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            ini = root / 'variants/test/platformio.ini'
+            ini.parent.mkdir(parents=True)
+            ini.write_text('[env:board-a]\\ncustom_meshtastic_display_name = Board A\\n')
+            resource = root / 'resource.ts'
+            resource.write_text('''{\\nplatformioTarget: "board-a",\\ndisplayName: "One",\\n},
+{\\nplatformioTarget: "board-a",\\ndisplayName: "Two",\\n},''')
+            output = io.StringIO()
+            with patch.object(sys, 'argv', ['audit', '--strict',
+                                             '--firmware-root', str(root),
+                                             '--api-resource', str(resource)]):
+                with contextlib.redirect_stdout(output):
+                    with self.assertRaises(SystemExit) as exc:
+                        main()
+            self.assertEqual(exc.exception.code, 1)
+            self.assertEqual(json.loads(output.getvalue())['ambiguous_api_targets'],
+                             ['board-a'])
+
     def test_compare_names_and_absences(self):
         actual = compare({'a': 'One', 'b': 'Two', 'c': 'Three'},
                          {'a': 'One', 'b': 'TWO', 'd': 'Four'})
