@@ -49,6 +49,18 @@ class ConfigOverlayTests(unittest.TestCase):
         self.assertEqual(emitted_value(output, 'General', 'MaxNodes'), '500')
         self.assertEqual(emitted_value(output, 'Logging', 'MaxNodes'), '10')
 
+    def test_emitted_scalar_parser_distinguishes_similar_section_names(self):
+        output = (
+            'GeneralExtra:\n'
+            '  MaxNodes: 999\n'
+            'General:\n'
+            '  MaxNodes: 500\n'
+            '  Nested:\n'
+            '    MaxNodes: 888\n'
+        )
+        self.assertEqual(emitted_value(output, 'General', 'MaxNodes'), '500')
+        self.assertEqual(emitted_value(output, 'GeneralExtra', 'MaxNodes'), '999')
+
     @unittest.skipUnless(os.environ.get('MESHTASTICD_BIN'),
                          'Set MESHTASTICD_BIN to run native overlay integration')
     def test_partial_overlays_preserve_unmentioned_keys(self):
@@ -82,6 +94,16 @@ class ConfigOverlayTests(unittest.TestCase):
                 '  Channel: 0\n',
                 encoding='utf-8',
             )
+            # A second partial file must not reset unrelated values from
+            # either the base config or the first overlay. It deliberately
+            # updates different keys so directory enumeration order is irrelevant.
+            (overlay_dir / 'another.yaml').write_text(
+                'General:\n'
+                '  APIPort: 4405\n'
+                'Logging:\n'
+                '  TraceFile: second-trace.log\n',
+                encoding='utf-8',
+            )
             proc = subprocess.run(
                 [os.environ['MESHTASTICD_BIN'], '-c', str(base), '--output-yaml'],
                 cwd=root, capture_output=True, text=True, timeout=30, check=False,
@@ -91,9 +113,9 @@ class ConfigOverlayTests(unittest.TestCase):
                 ('General', 'MaxNodes', '500'),
                 ('General', 'MaxMessageQueue', '60'),
                 ('General', 'MACAddress', '020000000001'),
-                ('General', 'TCPPort', '4403'),
+                ('General', 'TCPPort', '4405'),
                 ('Logging', 'LogLevel', 'debug'),
-                ('Logging', 'TraceFile', 'trace.log'),
+                ('Logging', 'TraceFile', 'second-trace.log'),
                 ('Logging', 'JSONFile', 'output.json'),
                 ('HostMetrics', 'UserStringCommand', 'echo base'),
                 ('HostMetrics', 'ReportInterval', '42'),
