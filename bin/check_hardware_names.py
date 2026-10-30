@@ -121,7 +121,7 @@ def main():
     parser.add_argument('--api-resource', type=Path, required=True,
                         help='Checkout of meshtastic/api src/lib/resource.ts')
     parser.add_argument('--strict', action='store_true',
-                        help='Fail when mismatched display names exist')
+                        help='Fail on mismatched names or ambiguous API targets')
     args = parser.parse_args()
     firmware = firmware_names(args.firmware_root)
     api = api_names(args.api_resource.read_text(encoding='utf-8'))
@@ -129,7 +129,7 @@ def main():
         parser.error('No display names found; check both input paths')
     result = compare(firmware, api)
     print(json.dumps(result, indent=2, ensure_ascii=False))
-    if args.strict and result['mismatched']:
+    if args.strict and (result['mismatched'] or result['ambiguous_api_targets']):
         raise SystemExit(1)
 
 
