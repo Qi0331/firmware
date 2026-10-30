@@ -102,10 +102,10 @@ class HardwareNameAuditTests(unittest.TestCase):
             root = Path(tmp)
             ini = root / 'variants/test/platformio.ini'
             ini.parent.mkdir(parents=True)
-            ini.write_text('[env:board-a]\\ncustom_meshtastic_display_name = Board A\\n')
+            ini.write_text('[env:board-a]\ncustom_meshtastic_display_name = Board A\n')
             resource = root / 'resource.ts'
-            resource.write_text('''{\\nplatformioTarget: "board-a",\\ndisplayName: "One",\\n},
-{\\nplatformioTarget: "board-a",\\ndisplayName: "Two",\\n},''')
+            resource.write_text('''{\nplatformioTarget: "board-a",\ndisplayName: "One",\n},
+{\nplatformioTarget: "board-a",\ndisplayName: "Two",\n},''')
             output = io.StringIO()
             with patch.object(sys, 'argv', ['audit', '--strict',
                                              '--firmware-root', str(root),
