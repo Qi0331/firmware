@@ -44,8 +44,8 @@ class HardwareNameAuditTests(unittest.TestCase):
                 target = root / 'variants' / variant / 'platformio.ini'
                 target.parent.mkdir(parents=True)
                 target.write_text(
-                    '[env:shared-board]\\n'
-                    f'custom_meshtastic_display_name = {name}\\n'
+                    '[env:shared-board]\n'
+                    f'custom_meshtastic_display_name = {name}\n'
                 )
             firmware = firmware_names(root)
             self.assertIsNone(firmware['shared-board'])
@@ -61,8 +61,8 @@ class HardwareNameAuditTests(unittest.TestCase):
                 target = root / 'variants' / variant / 'platformio.ini'
                 target.parent.mkdir(parents=True)
                 target.write_text(
-                    '[env:shared-board]\\n'
-                    'custom_meshtastic_display_name = Same\\n'
+                    '[env:shared-board]\n'
+                    'custom_meshtastic_display_name = Same\n'
                 )
             self.assertEqual(firmware_names(root), {'shared-board': 'Same'})
 
