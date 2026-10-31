@@ -70,9 +70,9 @@ class ThinkNodeM5PsramConfigTests(unittest.TestCase):
                 body = env_body(ini, env)
                 self.assertNotRegex(
                     body,
-                    r'(?m)^\\s*board_build\\.(?:arduino\\.memory_type|psram_type|flash_mode)\\s*=',
+                    r'(?m)^\s*board_build\.(?:arduino\.memory_type|psram_type|flash_mode)\s*=',
                 )
-                self.assertNotRegex(body, r'(?m)^\\s*board_build\\.flash_size\\s*=')
+                self.assertNotRegex(body, r'(?m)^\s*board_build\.flash_size\s*=')
 
 
 if __name__ == '__main__':
