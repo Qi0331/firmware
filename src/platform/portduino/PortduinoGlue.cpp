@@ -1136,21 +1136,27 @@ bool loadConfig(const char *configPath)
 
             if (portduino_config.lora_module != use_autoconf && portduino_config.lora_module != use_simradio &&
                 !portduino_config.force_simradio) {
-                portduino_config.dio2_as_rf_switch = yamlConfig["Lora"]["DIO2_AS_RF_SWITCH"].as<bool>(false);
-                portduino_config.dio3_tcxo_voltage = yamlConfig["Lora"]["DIO3_TCXO_VOLTAGE"].as<float>(0) * 1000;
-                if (portduino_config.dio3_tcxo_voltage == 0 && yamlConfig["Lora"]["DIO3_TCXO_VOLTAGE"].as<bool>(false)) {
-                    portduino_config.dio3_tcxo_voltage = 1800; // default millivolts for "true"
+                // ConfigDirectory fragments are partial overlays. Missing radio keys
+                // must not reset values selected by the base configuration.
+                if (yamlConfig["Lora"]["DIO2_AS_RF_SWITCH"])
+                    portduino_config.dio2_as_rf_switch = yamlConfig["Lora"]["DIO2_AS_RF_SWITCH"].as<bool>(false);
+                if (yamlConfig["Lora"]["DIO3_TCXO_VOLTAGE"]) {
+                    portduino_config.dio3_tcxo_voltage = yamlConfig["Lora"]["DIO3_TCXO_VOLTAGE"].as<float>(0) * 1000;
+                    if (portduino_config.dio3_tcxo_voltage == 0 && yamlConfig["Lora"]["DIO3_TCXO_VOLTAGE"].as<bool>(false)) {
+                        portduino_config.dio3_tcxo_voltage = 1800; // default millivolts for "true"
+                    }
+                    // Explicit false/zero disables TCXO; omission preserves the previous choice.
+                    portduino_config.dio3_tcxo_voltage_disabled = portduino_config.dio3_tcxo_voltage == 0;
                 }
-                // A written-out false or 0 asks for DIO3 to be left alone, which stores the same as
-                // an absent key. Kept apart so --check can see it contradict TCXO_OPTIONAL.
-                portduino_config.dio3_tcxo_voltage_disabled =
-                    yamlConfig["Lora"]["DIO3_TCXO_VOLTAGE"] && portduino_config.dio3_tcxo_voltage == 0;
-                portduino_config.dio3_tcxo_delay_us = yamlConfig["Lora"]["DIO3_TCXO_DELAY_US"].as<int>(0);
+                if (yamlConfig["Lora"]["DIO3_TCXO_DELAY_US"])
+                    portduino_config.dio3_tcxo_delay_us = yamlConfig["Lora"]["DIO3_TCXO_DELAY_US"].as<int>(0);
                 // Try both oscillators rather than requiring the user to know which is fitted.
-                portduino_config.tcxo_optional = yamlConfig["Lora"]["TCXO_OPTIONAL"].as<bool>(false);
+                if (yamlConfig["Lora"]["TCXO_OPTIONAL"])
+                    portduino_config.tcxo_optional = yamlConfig["Lora"]["TCXO_OPTIONAL"].as<bool>(false);
 
                 // backwards API compatibility and to globally set gpiochip once
-                portduino_config.lora_default_gpiochip = yamlConfig["Lora"]["gpiochip"].as<int>(0);
+                if (yamlConfig["Lora"]["gpiochip"])
+                    portduino_config.lora_default_gpiochip = yamlConfig["Lora"]["gpiochip"].as<int>(0);
                 for (auto this_pin : portduino_config.all_pins) {
                     if (this_pin->config_section == "Lora") {
                         readGPIOFromYaml(yamlConfig["Lora"][this_pin->config_name], *this_pin);
