@@ -94,23 +94,31 @@ def firmware_names(root):
                 continue
             match = re.match(r'^\s*custom_meshtastic_display_name\s*=\s*(.+?)\s*(?:;.*)?$', line)
             if match and env is not None:
-                records[env] = match.group(1).strip()
+                value = match.group(1).strip()
+                # A target declared by multiple variants must not silently
+                # take the last conflicting display name.
+                if env in records and records[env] != value:
+                    records[env] = None
+                elif env not in records:
+                    records[env] = value
     return records
 
 
 def compare(firmware, api):
     # Ambiguous API targets cannot be compared against one firmware name.
     unique_api = {k: v for k, v in api.items() if v is not None}
-    overlap = sorted(firmware.keys() & unique_api.keys())
+    unique_firmware = {k: v for k, v in firmware.items() if v is not None}
+    overlap = sorted(unique_firmware.keys() & unique_api.keys())
     return {
         'ambiguous_api_targets': sorted(api.keys() - unique_api.keys()),
+        'ambiguous_firmware_targets': sorted(firmware.keys() - unique_firmware.keys()),
         'mismatched': [
-            {'target': k, 'firmware': firmware[k], 'api': api[k]}
+            {'target': k, 'firmware': unique_firmware[k], 'api': api[k]}
             for k in overlap if firmware[k] != api[k]
         ],
         'api_without_firmware_display_name': sorted(unique_api.keys() - firmware.keys()),
-        'firmware_only_display_name': sorted(firmware.keys() - api.keys()),
-        'matched': sum(firmware[k] == api[k] for k in overlap),
+        'firmware_only_display_name': sorted(unique_firmware.keys() - api.keys()),
+        'matched': sum(unique_firmware[k] == api[k] for k in overlap),
         'compared': len(overlap),
     }
 
@@ -129,7 +137,7 @@ def main():
         parser.error('No display names found; check both input paths')
     result = compare(firmware, api)
     print(json.dumps(result, indent=2, ensure_ascii=False))
-    if args.strict and (result['mismatched'] or result['ambiguous_api_targets']):
+    if args.strict and (result['mismatched'] or result['ambiguous_api_targets'] or result['ambiguous_firmware_targets']):
         raise SystemExit(1)
 
 
