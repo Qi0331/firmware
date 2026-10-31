@@ -60,5 +60,20 @@ class ThinkNodeM5PsramConfigTests(unittest.TestCase):
                 self.assertRegex(body, r'(?m)^board_level\s*=\s*release\s*$')
 
 
+    def test_m5_variants_do_not_override_board_memory_configuration(self):
+        # PlatformIO env-level board_build.* keys can override the board JSON.
+        # Reject local flash/PSRAM overrides until the real module is verified.
+        ini = (ROOT / 'variants/esp32s3/ELECROW-ThinkNode-M5/platformio.ini'
+               ).read_text()
+        for env in ('thinknode_m5', 'thinknode_m5-inkhud'):
+            with self.subTest(env=env):
+                body = env_body(ini, env)
+                self.assertNotRegex(
+                    body,
+                    r'(?m)^\\s*board_build\\.(?:arduino\\.memory_type|psram_type|flash_mode)\\s*=',
+                )
+                self.assertNotRegex(body, r'(?m)^\\s*board_build\\.flash_size\\s*=')
+
+
 if __name__ == '__main__':
     unittest.main()
