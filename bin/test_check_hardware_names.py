@@ -37,6 +37,35 @@ class HardwareNameAuditTests(unittest.TestCase):
         self.assertEqual(api_names(text),
                          {'board-a': 'Board A // Pro', 'board-b': 'Board B'})
 
+    def test_conflicting_firmware_names_are_reported_not_overwritten(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            for variant, name in (('one', 'First'), ('two', 'Second')):
+                target = root / 'variants' / variant / 'platformio.ini'
+                target.parent.mkdir(parents=True)
+                target.write_text(
+                    '[env:shared-board]\\n'
+                    f'custom_meshtastic_display_name = {name}\\n'
+                )
+            firmware = firmware_names(root)
+            self.assertIsNone(firmware['shared-board'])
+            result = compare(firmware, {'shared-board': 'First'})
+            self.assertEqual(result['ambiguous_firmware_targets'], ['shared-board'])
+            self.assertEqual(result['compared'], 0)
+            self.assertEqual(result['mismatched'], [])
+
+    def test_repeated_identical_firmware_name_is_not_ambiguous(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            for variant in ('one', 'two'):
+                target = root / 'variants' / variant / 'platformio.ini'
+                target.parent.mkdir(parents=True)
+                target.write_text(
+                    '[env:shared-board]\\n'
+                    'custom_meshtastic_display_name = Same\\n'
+                )
+            self.assertEqual(firmware_names(root), {'shared-board': 'Same'})
+
     def test_extract_variant_names(self):
         with tempfile.TemporaryDirectory() as tmp:
             target = Path(tmp) / 'variants/esp32/test/platformio.ini'
