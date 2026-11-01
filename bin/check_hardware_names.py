@@ -79,7 +79,7 @@ def ts_string_field(line, field):
             i += 2
             continue
         if ch == quote:
-            return ''.join(value)
+            return ''.join(value) if value else None
         value.append(ch)
         i += 1
     return None
