@@ -171,5 +171,16 @@ class HardwareNameAuditTests(unittest.TestCase):
         },'''
         self.assertEqual(api_names(text), {})
 
+    def test_empty_api_hardware_names_are_ignored(self):
+        text = """{
+          platformioTarget: "",
+          displayName: "Missing target",
+        },
+        {
+          platformioTarget: "board-a",
+          displayName: "",
+        },"""
+        self.assertEqual(api_names(text), {})
+
 if __name__ == '__main__':
     unittest.main()
