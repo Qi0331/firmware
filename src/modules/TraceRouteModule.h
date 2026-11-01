@@ -1,5 +1,6 @@
 #pragma once
 #include "ProtobufModule.h"
+#include "TraceRouteTimeout.h"
 #include "concurrency/OSThread.h"
 #include "graphics/Screen.h"
 #include "graphics/SharedUIDisplay.h"
@@ -77,7 +78,7 @@ class TraceRouteModule : public ProtobufModule<meshtastic_RouteDiscovery>,
     unsigned long resultShowTime = 0;
     unsigned long cooldownMs = 30000;
     unsigned long resultDisplayMs = 10000;
-    unsigned long trackingTimeoutMs = 10000;
+    unsigned long trackingTimeoutMs = traceroute_timing::kTrackingTimeoutMs;
     String bannerText;
     String resultText;
     std::vector<String> resultLines;
