@@ -8,6 +8,7 @@
 
 #include "ConfigCheck.h"
 #include "PortduinoGlue.h"
+#include "SpiDeviceId.h"
 #include "SHA256.h"
 #include "UptimeClock.h"
 #include "api/ServerAPI.h"
@@ -1173,8 +1174,8 @@ bool loadConfig(const char *configPath)
                     int y = portduino_config.lora_spi_dev.at(13) - '0';
                     // Pretty sure this is always true
                     if (x >= 0 && x < 10 && y >= 0 && y < 10) {
-                        // I believe this bit of weirdness is specifically for the new GUI
-                        portduino_config.lora_spi_dev_int = x + y << 4;
+                        // Low nibble is the SPI bus; high nibble is the device.
+                        portduino_config.lora_spi_dev_int = portduino::packSpiDeviceId(x, y);
                         portduino_config.display_spi_dev_int = portduino_config.lora_spi_dev_int;
                         portduino_config.touchscreen_spi_dev_int = portduino_config.lora_spi_dev_int;
                     }
