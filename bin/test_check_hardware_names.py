@@ -157,5 +157,19 @@ class HardwareNameAuditTests(unittest.TestCase):
         self.assertEqual(actual['firmware_only_display_name'], ['c'])
 
 
+    def test_escaped_quote_in_api_display_name(self):
+        text = r'''{
+          platformioTarget: "board-a",
+          displayName: "Maker \"A\" / Rev 2",
+        },'''
+        self.assertEqual(api_names(text), {'board-a': 'Maker "A" / Rev 2'})
+
+    def test_unterminated_api_display_name_is_not_truncated(self):
+        text = '''{
+          platformioTarget: "board-a",
+          displayName: "Unterminated,
+        },'''
+        self.assertEqual(api_names(text), {})
+
 if __name__ == '__main__':
     unittest.main()
