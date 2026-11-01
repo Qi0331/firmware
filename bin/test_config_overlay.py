@@ -61,6 +61,21 @@ class ConfigOverlayTests(unittest.TestCase):
         self.assertEqual(emitted_value(output, 'General', 'MaxNodes'), '500')
         self.assertEqual(emitted_value(output, 'GeneralExtra', 'MaxNodes'), '999')
 
+    def test_emitted_scalar_parser_reads_lora_usb_fields(self):
+        output = (
+            'Lora:\n'
+            '  spiSpeed: 4000000\n'
+            '  USB_PID: 0x1234\n'
+            '  USB_VID: 0x5678\n'
+            '  USB_Serialnum: serial-original\n'
+            'General:\n'
+            '  MaxNodes: 500\n'
+        )
+        self.assertEqual(emitted_value(output, 'Lora', 'spiSpeed'), '4000000')
+        self.assertEqual(emitted_value(output, 'Lora', 'USB_Serialnum'), 'serial-original')
+        self.assertEqual(int(emitted_value(output, 'Lora', 'USB_PID'), 0), 0x1234)
+        self.assertEqual(int(emitted_value(output, 'Lora', 'USB_VID'), 0), 0x5678)
+
     @unittest.skipUnless(os.environ.get('MESHTASTICD_BIN'),
                          'Set MESHTASTICD_BIN to run native overlay integration')
     def test_partial_overlays_preserve_unmentioned_keys(self):
@@ -76,6 +91,11 @@ class ConfigOverlayTests(unittest.TestCase):
                 f'  ConfigDirectory: {overlay_dir}/\n'
                 '  MACAddress: "020000000001"\n'
                 '  APIPort: 4403\n'
+                'Lora:\n'
+                '  spiSpeed: 4000000\n'
+                '  USB_PID: 0x1234\n'
+                '  USB_VID: 0x5678\n'
+                '  USB_Serialnum: serial-original\n'
                 'Logging:\n'
                 '  LogLevel: debug\n'
                 '  TraceFile: trace.log\n'
@@ -90,6 +110,8 @@ class ConfigOverlayTests(unittest.TestCase):
                 '  MaxMessageQueue: 60\n'
                 'Logging:\n'
                 '  JSONFile: output.json\n'
+                'Lora:\n'
+                '  RF95_MAX_POWER: 19\n'
                 'HostMetrics:\n'
                 '  Channel: 0\n',
                 encoding='utf-8',
@@ -114,6 +136,8 @@ class ConfigOverlayTests(unittest.TestCase):
                 ('General', 'MaxMessageQueue', '60'),
                 ('General', 'MACAddress', '020000000001'),
                 ('General', 'TCPPort', '4405'),
+                ('Lora', 'spiSpeed', '4000000'),
+                ('Lora', 'USB_Serialnum', 'serial-original'),
                 ('Logging', 'LogLevel', 'debug'),
                 ('Logging', 'TraceFile', 'second-trace.log'),
                 ('Logging', 'JSONFile', 'output.json'),
@@ -124,6 +148,8 @@ class ConfigOverlayTests(unittest.TestCase):
                 with self.subTest(section=section, key=key):
                     self.assertEqual(emitted_value(proc.stdout, section, key),
                                      expected)
+            self.assertEqual(int(emitted_value(proc.stdout, 'Lora', 'USB_PID'), 0), 0x1234)
+            self.assertEqual(int(emitted_value(proc.stdout, 'Lora', 'USB_VID'), 0), 0x5678)
 
 
 if __name__ == '__main__':
