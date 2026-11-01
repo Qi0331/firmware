@@ -1175,10 +1175,16 @@ bool loadConfig(const char *configPath)
                 }
             }
 
-            portduino_config.spiSpeed = yamlConfig["Lora"]["spiSpeed"].as<int>(2000000);
-            portduino_config.lora_usb_serial_num = yamlConfig["Lora"]["USB_Serialnum"].as<std::string>("");
-            portduino_config.lora_usb_pid = yamlConfig["Lora"]["USB_PID"].as<int>(0x5512);
-            portduino_config.lora_usb_vid = yamlConfig["Lora"]["USB_VID"].as<int>(0x1A86);
+            // ConfigDirectory files may contain just one Lora key. Preserve
+            // settings from the base file when later fragments omit these keys.
+            if (yamlConfig["Lora"]["spiSpeed"])
+                portduino_config.spiSpeed = yamlConfig["Lora"]["spiSpeed"].as<int>(2000000);
+            if (yamlConfig["Lora"]["USB_Serialnum"])
+                portduino_config.lora_usb_serial_num = yamlConfig["Lora"]["USB_Serialnum"].as<std::string>("");
+            if (yamlConfig["Lora"]["USB_PID"])
+                portduino_config.lora_usb_pid = yamlConfig["Lora"]["USB_PID"].as<int>(0x5512);
+            if (yamlConfig["Lora"]["USB_VID"])
+                portduino_config.lora_usb_vid = yamlConfig["Lora"]["USB_VID"].as<int>(0x1A86);
 
             portduino_config.lora_spi_dev = yamlConfig["Lora"]["spidev"].as<std::string>("spidev0.0");
             if (portduino_config.lora_spi_dev != "ch341") {
