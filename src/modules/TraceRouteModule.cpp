@@ -850,12 +850,14 @@ int32_t TraceRouteModule::runOnce()
     }
 
     // Check for tracking timeout
-    if (runState == TRACEROUTE_STATE_TRACKING && now - lastTraceRouteTime > trackingTimeoutMs) {
+    if (runState == TRACEROUTE_STATE_TRACKING &&
+        traceroute_timing::timedOut(now, lastTraceRouteTime, trackingTimeoutMs)) {
         LOG_INFO("TraceRoute timeout, no response");
         runState = TRACEROUTE_STATE_RESULT;
         setResultText("No response received");
         resultShowTime = now;
-        tracingNode = 0;
+        // Retain tracingNode during the result-display window so a matching
+        // late reply can replace the timeout message before the UI returns idle.
 
         requestFocus();
         UIFrameEvent e;
