@@ -56,6 +56,35 @@ def strip_ts_comments(text):
     return ''.join(result)
 
 
+def ts_string_field(line, field):
+    """Read a quoted TypeScript string field, including escaped quotes.
+
+    An unclosed literal is ignored rather than silently truncating a
+    hardware display name and reporting a false mismatch.
+    """
+    match = re.search(r'\b' + re.escape(field) + r"\s*:\s*(['\"])", line)
+    if not match:
+        return None
+    quote = match.group(1)
+    value = []
+    i = match.end()
+    while i < len(line):
+        ch = line[i]
+        if ch == '\\' and i + 1 < len(line):
+            escaped = line[i + 1]
+            if escaped in (quote, '\\'):
+                value.append(escaped)
+            else:
+                value.extend(('\\', escaped))
+            i += 2
+            continue
+        if ch == quote:
+            return ''.join(value)
+        value.append(ch)
+        i += 1
+    return None
+
+
 def api_names(text):
     """Extract simple DeviceHardware entries from resource.ts."""
     records = {}
@@ -63,12 +92,12 @@ def api_names(text):
     for line in strip_ts_comments(text).splitlines():
         if re.match(r'^\s*\{\s*$', line):
             target = name = None
-        match = re.search(r'\bplatformioTarget:\s*[\'\"]([^\'\"]+)[\'\"]', line)
-        if match:
-            target = match.group(1)
-        match = re.search(r'\bdisplayName:\s*[\'\"]([^\'\"]+)[\'\"]', line)
-        if match:
-            name = match.group(1)
+        found_target = ts_string_field(line, 'platformioTarget')
+        if found_target is not None:
+            target = found_target
+        found_name = ts_string_field(line, 'displayName')
+        if found_name is not None:
+            name = found_name
         if re.match(r'^\s*\},?\s*$', line):
             if target is not None and name is not None:
                 # Multiple hardware models can share a PlatformIO target.
