@@ -17,6 +17,9 @@ def emitted_value(output, section, key):
     """Read a top-level section's scalar from meshtasticd --output-yaml."""
     inside = False
     for line in output.splitlines():
+        if line.strip() in ('---', '...'):
+            inside = False
+            continue
         if re.fullmatch(r'[A-Za-z][A-Za-z0-9]*:', line):
             inside = line[:-1] == section
             continue
@@ -25,7 +28,10 @@ def emitted_value(output, section, key):
             # A nested mapping may reuse a key, but is not the section value.
             match = re.fullmatch(r' {2}' + re.escape(key) + r':\s*(.*?)\s*', line)
             if match:
-                return match.group(1).strip('"\'')
+                value = match.group(1)
+                if len(value) >= 2 and value[0] == value[-1] and value[0] in ('"', "'"):
+                    value = value[1:-1]
+                return value
     raise AssertionError(f'Missing {section}.{key} in emitted YAML:\n{output}')
 
 
@@ -75,6 +81,16 @@ class ConfigOverlayTests(unittest.TestCase):
         self.assertEqual(emitted_value(output, 'Lora', 'USB_Serialnum'), 'serial-original')
         self.assertEqual(int(emitted_value(output, 'Lora', 'USB_PID'), 0), 0x1234)
         self.assertEqual(int(emitted_value(output, 'Lora', 'USB_VID'), 0), 0x5678)
+
+    def test_emitted_scalar_parser_preserves_inner_quotes(self):
+        output = 'HostMetrics:\n  UserStringCommand: "echo \'hello\'"\n'
+        self.assertEqual(emitted_value(output, 'HostMetrics', 'UserStringCommand'),
+                         "echo 'hello'")
+
+    def test_yaml_document_boundaries_do_not_leak_sections(self):
+        output = 'General:\n  MaxNodes: 500\n...\n  MaxMessageQueue: 100\n'
+        with self.assertRaises(AssertionError):
+            emitted_value(output, 'General', 'MaxMessageQueue')
 
     @unittest.skipUnless(os.environ.get('MESHTASTICD_BIN'),
                          'Set MESHTASTICD_BIN to run native overlay integration')
