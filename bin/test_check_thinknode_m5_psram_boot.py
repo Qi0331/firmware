@@ -32,6 +32,20 @@ class ThinkNodeM5BootLogTests(unittest.TestCase):
                'reboot\nTotal PSRAM: 8,388,608\nFree PSRAM: 7,340,032\n')
         self.assertEqual(last_boot_psram(log), (8388608, 7340032))
 
+    def test_reboot_without_new_readings_invalidates_old_success(self):
+        log = 'Total PSRAM: 8388608\nFree PSRAM: 7340032\nreboot\n'
+        with self.assertRaises(ValueError):
+            last_boot_psram(log)
+
+    def test_reset_between_total_and_free_does_not_mix_boots(self):
+        log = 'Total PSRAM: 8388608\nrst:0x1 (POWERON_RESET)\nFree PSRAM: 7340032\n'
+        with self.assertRaises(ValueError):
+            last_boot_psram(log)
+
+    def test_non_reset_word_does_not_invalidate_log(self):
+        log = 'Total PSRAM: 8388608\npreboot status\nFree PSRAM: 7340032\n'
+        self.assertEqual(last_boot_psram(log), (8388608, 7340032))
+
     def test_impossible_free_exceeding_total_is_rejected(self):
         self.assertTrue(validate_psram(8388608, 9000000))
 
