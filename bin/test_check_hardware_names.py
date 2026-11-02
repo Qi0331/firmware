@@ -66,6 +66,22 @@ class HardwareNameAuditTests(unittest.TestCase):
                 )
             self.assertEqual(firmware_names(root), {'shared-board': 'Same'})
 
+    def test_inline_api_records_are_not_silently_dropped(self):
+        text = """export const devices = [
+          { platformioTarget: 'inline-a', displayName: 'Inline A' },
+          { platformioTarget: 'inline-b', displayName: 'Inline B' },
+        ]"""
+        self.assertEqual(api_names(text), {'inline-a': 'Inline A',
+                                           'inline-b': 'Inline B'})
+
+    def test_quoted_metadata_does_not_inject_hardware_fields(self):
+        text = """{
+          platformioTarget: 'real',
+          notes: "displayName: 'Fake'",
+          displayName: 'Actual',
+        },"""
+        self.assertEqual(api_names(text), {'real': 'Actual'})
+
     def test_extract_variant_names(self):
         with tempfile.TemporaryDirectory() as tmp:
             target = Path(tmp) / 'variants/esp32/test/platformio.ini'
