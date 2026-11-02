@@ -11,6 +11,7 @@ from pathlib import Path
 TOTAL = re.compile(r'\bTotal PSRAM\s*:\s*([\d,]+)\b', re.IGNORECASE)
 FREE = re.compile(r'\bFree PSRAM\s*:\s*([\d,]+)\b', re.IGNORECASE)
 MIN_TOTAL_BYTES = 7 * 1024 * 1024
+BOOT_MARKER = re.compile(r'\breboot\b|\brst:0x[0-9a-f]+|\bESP-ROM:', re.IGNORECASE)
 
 
 def last_boot_psram(log):
@@ -18,6 +19,10 @@ def last_boot_psram(log):
     pending_total = None
     last_pair = None
     for line in log.splitlines():
+        if BOOT_MARKER.search(line):
+            pending_total = None
+            last_pair = None
+            continue
         total = TOTAL.search(line)
         if total:
             pending_total = int(total.group(1).replace(',', ''))
