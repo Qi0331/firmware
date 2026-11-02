@@ -62,7 +62,7 @@ def ts_string_field(line, field):
     An unclosed literal is ignored rather than silently truncating a
     hardware display name and reporting a false mismatch.
     """
-    match = re.search(r'\b' + re.escape(field) + r"\s*:\s*(['\"])", line)
+    match = re.search(r'(?:^|[,{])\s*' + re.escape(field) + r"\s*:\s*(['\"])", line)
     if not match:
         return None
     quote = match.group(1)
@@ -90,7 +90,7 @@ def api_names(text):
     records = {}
     target = name = None
     for line in strip_ts_comments(text).splitlines():
-        if re.match(r'^\s*\{\s*$', line):
+        if re.match(r'^\s*\{', line):
             target = name = None
         found_target = ts_string_field(line, 'platformioTarget')
         if found_target is not None:
@@ -98,7 +98,7 @@ def api_names(text):
         found_name = ts_string_field(line, 'displayName')
         if found_name is not None:
             name = found_name
-        if re.match(r'^\s*\},?\s*$', line):
+        if re.search(r'\}\s*,?\s*$', line):
             if target is not None and name is not None:
                 # Multiple hardware models can share a PlatformIO target.
                 # Do not silently keep the last API display name.
