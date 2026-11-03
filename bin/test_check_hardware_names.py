@@ -113,6 +113,23 @@ class HardwareNameAuditTests(unittest.TestCase):
         self.assertEqual(result['matched'], 1)
         self.assertEqual(result['compared'], 1)
 
+    def test_three_api_entries_cannot_clear_ambiguity(self):
+        text = """{ platformioTarget: 'shared', displayName: 'First' },
+        { platformioTarget: 'shared', displayName: 'Second' },
+        { platformioTarget: 'shared', displayName: 'Second' },"""
+        self.assertIsNone(api_names(text)['shared'])
+
+    def test_three_firmware_entries_cannot_clear_ambiguity(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            for variant, name in (('one', 'First'), ('two', 'Second'),
+                                  ('three', 'Second')):
+                ini = root / 'variants' / variant / 'platformio.ini'
+                ini.parent.mkdir(parents=True)
+                ini.write_text('[env:shared]\\n'
+                               f'custom_meshtastic_display_name = {name}\\n')
+            self.assertIsNone(firmware_names(root)['shared'])
+
     def test_non_env_section_does_not_leak_into_previous_env(self):
         with tempfile.TemporaryDirectory() as tmp:
             target = Path(tmp) / 'variants/esp32/test/platformio.ini'
