@@ -126,8 +126,8 @@ class HardwareNameAuditTests(unittest.TestCase):
                                   ('three', 'Second')):
                 ini = root / 'variants' / variant / 'platformio.ini'
                 ini.parent.mkdir(parents=True)
-                ini.write_text('[env:shared]\\n'
-                               f'custom_meshtastic_display_name = {name}\\n')
+                ini.write_text('[env:shared]\n'
+                               f'custom_meshtastic_display_name = {name}\n')
             self.assertIsNone(firmware_names(root)['shared'])
 
     def test_non_env_section_does_not_leak_into_previous_env(self):
